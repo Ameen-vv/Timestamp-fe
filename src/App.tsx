@@ -94,7 +94,7 @@ const App: React.FC = () => {
         Calculate Difference
       </button>
       {state.loading && <p>Please wait...</p>}
-      {state.differenceInSeconds !== null && (
+      {state.differenceInSeconds !== null && !state.loading && (
         <div>
           <p>
             Difference is:{" "}
