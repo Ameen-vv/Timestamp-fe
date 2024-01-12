@@ -8,6 +8,7 @@ interface AppState {
   timestamp2: Date | null;
   differenceInSeconds: number | null;
   error: string | null;
+  loading: boolean;
 }
 
 const App: React.FC = () => {
@@ -16,6 +17,7 @@ const App: React.FC = () => {
     timestamp2: null,
     differenceInSeconds: null,
     error: null,
+    loading: false,
   });
 
   const handleChange = (
@@ -26,17 +28,20 @@ const App: React.FC = () => {
   };
 
   const calculateDifference = async (): Promise<void> => {
-    const { timestamp1, timestamp2 } = state;
+    setState((prev) => ({ ...prev, loading: true }));
 
     try {
       const response = await fetch(
-        "http://localhost:3001/calculate-difference",
+        "https://cyberwarfare-be.onrender.com/calculate-seconds-difference",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ timestamp1, timestamp2 }),
+          body: JSON.stringify({
+            timestamp1: state.timestamp1,
+            timestamp2: state.timestamp2,
+          }),
         }
       );
 
@@ -52,11 +57,15 @@ const App: React.FC = () => {
         error: null,
       }));
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
       setState((prev) => ({
         ...prev,
         differenceInSeconds: null,
-        error: error as string,
+        error: errorMessage,
       }));
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -81,10 +90,22 @@ const App: React.FC = () => {
           dateFormat="dd/MM/yyyy HH:mm:ss"
         />
       </div>
-      <button onClick={calculateDifference}>Calculate Difference</button>
+      <button onClick={calculateDifference} disabled={state.loading}>
+        Calculate Difference
+      </button>
+      {state.loading && <p>Please wait...</p>}
       {state.differenceInSeconds !== null && (
         <div>
-          <p>Difference in seconds: {state.differenceInSeconds}</p>
+          <p>
+            Difference is:{" "}
+            <span style={{ fontWeight: 700 }}>{state.differenceInSeconds}</span>{" "}
+            seconds
+          </p>
+        </div>
+      )}
+      {state.error && (
+        <div>
+          <p style={{ color: "red" }}>{state.error}</p>
         </div>
       )}
     </div>
@@ -92,3 +113,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
